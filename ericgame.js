@@ -1,33 +1,40 @@
+
 var player;
 var platforms; 
 var cursors;
+var ground;
 
-class First extends Phaser.Scene{
-    constructor()
+class Level extends Phaser.Scene{
+    constructor(config)
     {
-        super("First")
+        super(config)
     }
 
     preload()
     {
 
         this.load.image('back', 'Assets/country-platform-files/layers/country-platform-back.png');
-        this.load.image('forest', 'Assets/country-platform-files/layers/country-platform-tiles-example.png');
-        this.load.image('set', 'Assets/country-platform-files/layers/country-platform-tileset.png');
+        this.load.image('ground', 'Assets/ground.png');
         this.load.spritesheet('eric', 'Assets/eric.png', {frameWidth: 32, frameHeight: 32});
         
     }
 
     create()
     {
-        this.bg = this.add.tileSprite(0, 0, game.config.width, game.config.height, 'back').setOrigin(0);
+        let cam = this.cameras.main
+        this.bg = this.add.tileSprite(0, 0, gameState.width, gameState.height, 'back').setOrigin(0);
         player = this.physics.add.sprite(0, 0, 'eric');
+        ground = this.add.tileSprite(0, 200, gameState.width, 50, 'ground').setOrigin(0);
         platforms = this.physics.add.staticGroup();
-        platforms.create(80, 200, 'forest').setScale(.25).refreshBody();
-        this.physics.add.collider(player, platforms);
+        
+        this.physics.add.existing(ground);
+        ground.enableBody = true;
+        ground.body.allowGravity = false;
+        ground.body.immovable = true;
+        this.physics.add.collider(player, ground);
 		player.setCollideWorldBounds(true);
         cursors = this.input.keyboard.createCursorKeys();
-        
+
         this.anims.create({
             key: 'left',
             frames: this.anims.generateFrameNumbers('eric', { start: 0, end: 2 }),
@@ -48,13 +55,13 @@ class First extends Phaser.Scene{
             repeat: -1
         });
 
-
-    }
+        cam.startFollow(player, true)
+        cam.setBounds(0,0,gameState.width, gameState.height)
+		this.physics.world.setBounds(0,0,gameState.width, gameState.height)
+        }
 
     update()
     {
-        // this.bg.tilePosition.X += .5;
-
         if (cursors.left.isDown) {
             player.setVelocityX(-160);
             player.anims.play('left', true)
@@ -75,83 +82,32 @@ class First extends Phaser.Scene{
     }
 }
 
-class Second extends Phaser.Scene{
+class First extends Level{
     constructor()
     {
-        super("Second")
-    }
-
-    preload()
-    {
-
-        this.load.image('back', 'Assets/country-platform-files/layers/country-platform-back.png');
-        this.load.image('forest', 'Assets/country-platform-files/layers/country-platform-forest.png');
-        this.load.image('set', 'Assets/country-platform-files/country-platform.psd')
-        this.load.spritesheet('eric', 'Assets/eric.png', {frameWidth: 32, frameHeight: 32})
-        
-    }
-
-    create()
-    {
-        this.bg = this.add.tileSprite(0, 0, game.config.width, game.config.height, 'back').setOrigin(0);
-        player = this.physics.add.sprite(0, 0, 'eric')
-        platforms = this.physics.add.staticGroup()
-        platforms.create(150, 112, 'set').setScale(1,1).refreshBody();
-        this.physics.add.collider(player, platforms);
-		player.setCollideWorldBounds(true);
-        cursors = this.input.keyboard.createCursorKeys();
-        
-        this.anims.create({
-            key: 'left',
-            frames: this.anims.generateFrameNumbers('eric', { start: 0, end: 2 }),
-            frameRate: 6,
-            repeat: -1
-        });
-    
-        this.anims.create({
-            key: 'turn',
-            frames: [ { key: 'eric', frame: 3 } ],
-            frameRate: 20
-        });
-    
-        this.anims.create({
-            key: 'right',
-            frames: this.anims.generateFrameNumbers('eric', { start: 4, end: 6 }),
-            frameRate: 6,
-            repeat: -1
-        });
-
-
-    }
-
-    update()
-    {
-        this.bg.tilePosition.X += .5;
-
-        if (cursors.left.isDown) {
-            player.setVelocityX(-160);
-            player.anims.play('left', true)
-		} else if (cursors.right.isDown) {
-            player.setVelocityX(160);
-            player.anims.play('right', true)
-		} else {
-            player.setVelocityX(0);
-            player.anims.play('turn')
-        }
-        if (cursors.space.isDown) {
-            player.setVelocityY(-160);
-        }
+        super({key: "First"})
     }
 }
 
+class Second extends Level{
+    constructor()
+    {
+        super({key: "Second"})
+    }
+}
+
+const gameState = {
+    width: 1000,
+    height: 220
+}
 const config = {
 	type: Phaser.AUTO,
-	width: 1024,
-    height: 768/3.5,
-    scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH
-    },
+	width: 612,
+    height: 220,
+    // scale: {
+    //     mode: Phaser.Scale.ENVELOP,
+    //     autoCenter: Phaser.Scale.NO_CENTER
+    // },
 	backgroundColor: "b9eaff",
 	physics: {
 		default: 'arcade',
@@ -160,7 +116,7 @@ const config = {
 			enableBody: true,
 		}
 	},
-	scene: [First]
+	scene: [First, Second]
     
 };
 

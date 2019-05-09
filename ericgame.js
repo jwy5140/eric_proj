@@ -72,8 +72,11 @@ class Level extends Phaser.Scene{
             player.setVelocityX(0);
             player.anims.play('turn')
         }
-        if (cursors.space.isDown) {
+        if (cursors.space.isDown && player.body.touching.down) {
             player.setVelocityY(-160);
+        }
+        if (cursors.down.isDown){
+            player.setVelocityY(100);
         }
         // if(this.player.sprite.x > 15400){
         //     this.scene.end(First);

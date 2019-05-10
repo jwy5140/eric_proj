@@ -7,7 +7,8 @@ var portal;
 var player;
 var akali;
 var cam;
-
+var soundButton;
+// var doorState;
 
 class Start extends Phaser.Scene{
     constructor(config)
@@ -17,7 +18,8 @@ class Start extends Phaser.Scene{
 
     preload()
     {
-        this.load.image('ericDesk', 'Assets/ericDesk');
+        this.load.image('ericDesk', 'Assets/ericDesk.png');
+        this.load.audio('soundtrack', 'Assets/theMoon.mp3');
         // this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
         // this.load.spritesheet('ericDesk', 'Assets/ericDeskAni.png', {frameWidth: 600, frameHeight: 338});
     }
@@ -52,7 +54,17 @@ class Start extends Phaser.Scene{
             this.scene.stop('Start')
             this.scene.start('First')
         });
-        this.add.text(205, 135, "The Tale \n    of Eric")
+        this.add.text(205, 125, "The Tale \n    of Eric\n   (BETA)")
+        let soundtrack = this.sound.add('soundtrack', {    
+            mute: false,
+            volume: 1,
+            rate: 1,
+            detune: 0,
+            seek: 0,
+            loop: true,
+            delay: 0
+        })
+        soundtrack.play()
     }
 
     update()
@@ -69,6 +81,8 @@ class Level extends Phaser.Scene{
 
     preload()
     {
+        this.load.image('soundOn', 'Assets/soundOn.png');
+        this.load.image('soundOff', 'Assets/soundOff.png');
         this.load.image('back', 'Assets/country-platform-files/layers/country-platform-back2.png');
         this.load.image('ground', 'Assets/ground.png');
         this.load.image('platform', 'Assets/platform.png');
@@ -83,20 +97,24 @@ class Level extends Phaser.Scene{
     create()
     {
         //  OBJECT CREATION AND SETUP
-
+        // soundtrack.stop()
         cam = this.cameras.main;
         this.bg = this.add.tileSprite(0, 0, gameState.width, gameState.height, 'back').setOrigin(0).setScale(1.5);
-        akali = this.physics.add.sprite(50, gameState.height-50, 'akali').setScale(.75);
+        akali = this.physics.add.sprite(gameState.width-200, gameState.height-50, 'akali').setScale(.75);
         portal = this.physics.add.sprite(gameState.width-40,gameState.height-50,'portal').setScale(.5);
         player = this.physics.add.sprite(0, gameState.height-50, 'eric');
+        // soundButton = this.add.image(config.width-35, config.height-65, 'soundOn').setScale(.20);
+        // soundButton.startFollow(player, true);
+        // soundButton.setBounds(0,0,gameState.width, gameState.height);
         ground = this.add.tileSprite(0, gameState.height-30, gameState.width, 50, 'ground').setOrigin(0);
         platforms = this.physics.add.staticGroup();
-        this.children.bringToTop(player);
-        
         for (let n = 1; n <= 18; n++)
         {
             platforms.create(n*100, createRandomY(), 'platform')
         }
+
+        this.children.bringToTop(player);
+        this.children.bringToTop(soundButton);
 
         this.physics.add.existing(ground);
         ground.enableBody = true;
@@ -107,6 +125,8 @@ class Level extends Phaser.Scene{
         this.physics.add.collider(akali, platforms);
         this.physics.add.collider(portal, ground);
         this.physics.add.collider(akali, ground);
+        
+        // this.physics.add.overlap(player, akali, () => {doorState = true});
         player.setCollideWorldBounds(true);
         akali.setCollideWorldBounds(true);
         cursors = this.input.keyboard.createCursorKeys();
@@ -172,6 +192,13 @@ class Level extends Phaser.Scene{
             //     frames: [ { key: 'akali', frame: 7 } ],
             //     frameRate: 6
             // });
+
+            //DOOR
+            this.anims.create({
+                key: 'open',
+                frames: this.anims.generateFrameNumbers('portal', { start: 1, end: 12}),
+                frameRate: 6
+            })
         //-----------------------------
 
         //  CAMERA
@@ -181,9 +208,9 @@ class Level extends Phaser.Scene{
         //-----------------------------
 
         //  HELPER FUNCTIONS
-        function createRandomX(){
-            return Math.floor(Math.random()*(gameState.width-75)+100);
-        };
+        // function createRandomX(){
+        //     return Math.floor(Math.random()*(gameState.width-75)+100);
+        // };
         function createRandomY(){
             return Math.floor(Math.random()*(gameState.height-175)+100);
         };
@@ -211,22 +238,30 @@ class Level extends Phaser.Scene{
         if (cursors.space.isDown && player.body.touching.down) {
             player.setVelocityY(-250);
         }
+        this.physics.add.overlap(player, akali, () => {
+            akali.destroy();
+            portal.anims.play('open');
+            this.physics.add.overlap(player, portal, () => {
+                this.scene.stop('First')
+                this.scene.start('Second')
+            })
+        })
 
-        if (this.physics.arcade.distanceBetween(akali, player) < 600) {
+        // if (this.physics.arcade.distanceBetween(akali, player) < 600) {
 
-            // if player to left of akali AND akali moving to right (or not moving)
-            if (player.x < akali.x && akali.body.velocity.x >= 0) {
-                // move akali to left
-                akali.body.velocity.x = -150;
-                this.anims.playReverse('right')
-            }
-            // if player to right of akali AND akali moving to left (or not moving)
-            else if (player.x > akali.x && akali.body.velocity.x <= 0) {
-                // move akali to right
-                akali.body.velocity.x = 150;
-                this.anims.play('right')
-            }
-        }
+        //     // if player to left of akali AND akali moving to right (or not moving)
+        //     if (player.x < akali.x && akali.body.velocity.x >= 0) {
+        //         // move akali to left
+        //         akali.body.velocity.x = -150;
+        //         this.anims.playReverse('right')
+        //     }
+        //     // if player to right of akali AND akali moving to left (or not moving)
+        //     else if (player.x > akali.x && akali.body.velocity.x <= 0) {
+        //         // move akali to right
+        //         akali.body.velocity.x = 150;
+        //         this.anims.play('right')
+        //     }
+        // }
 
         
     }
@@ -285,6 +320,10 @@ class Boss extends Enemy{
         super(health, damage);
         this.skill = skill;
     }
+}
+
+function openDoor(){
+    return true;
 }
 // function loadakali(eData){
     // return this.load.spritesheet(`akali${eData.id}`, `${eData.image}`);

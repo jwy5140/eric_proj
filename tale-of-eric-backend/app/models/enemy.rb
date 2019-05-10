@@ -1,2 +1,3 @@
 class Enemy < ApplicationRecord
+    
 end

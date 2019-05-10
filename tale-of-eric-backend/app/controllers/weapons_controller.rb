@@ -12,6 +12,7 @@ class WeaponsController < ApplicationController
     def update
         @weapon = Weapon.find(params[:id])
         @weapon.update(weapon_params)
+        render json: @weapon
     end
 
     def create
